@@ -5,7 +5,38 @@ services:
     build: ./requirements/nginx
     ports:
       - 4234:80
+
+  # mariadb:
+  #   build: ./requirements/mariadb
+  #   ports:
+  #     - 3306:3306
+    
+services:
   mariadb:
-    build: ./requirements/mariadb
-    ports:
-      - 3306:3306
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
+      depends_on:
+        - mariadb
+      image: wordpress:latest
+      volumes:
+        - wordpress_data:/var/www/html
+      ports:
+        - "8000:80"
+      restart: always
+      environment:
+        WORDPRESS_DB_HOST: mariadb
+        WORDPRESS_DB_USER: wordpress
+        WORDPRESS_DB_PASSWORD: wordpress
+        WORDPRESS_DB_NAME: wordpress
+volumes:
+  wordpress_data:
+  db_data:

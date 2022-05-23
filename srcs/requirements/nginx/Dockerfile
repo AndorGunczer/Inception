@@ -3,7 +3,7 @@ FROM debian:buster
 RUN apt-get update -y
 RUN apt-get install nginx -y
 
-# COPY ./conf/nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY ./conf/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
 
