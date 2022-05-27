@@ -5,7 +5,26 @@ services:
     build: ./requirements/nginx
     ports:
       - 4234:80
+    networks:
+      - default
+
   mariadb:
     build: ./requirements/mariadb
-    ports:
-      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    networks:
+      - default
+
+  wordpress:
+    build: ./requirements/wordpress
+    networks:
+      - default
+
+networks:
+  default:
+    name: server
+  # driver: bridge #optional
+
+volumes:
+  db_data:
