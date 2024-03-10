@@ -1,0 +1,91 @@
+volumes:
+    mariadb_data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /home/agunczer42fr/data/mariadb
+    wordpress_data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /home/agunczer42fr/data/wordpress
+
+services:
+  nginx:
+    container_name: nginx
+    depends_on: 
+      - wordpress
+    build: "requirements/nginx"
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    restart: always
+    networks:
+      # - inception
+      static-network:
+        ipv4_address: ${NGINX_IP}
+
+  mariadb:
+    container_name: mariadb
+    build: "requirements/mariadb"
+    expose:
+      - "3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    environment:
+      - WP_DATABASE=${WP_DATABASE}
+      - WP_USER=${WP_USER}
+      - WP_ADMIN=${WP_ADMIN}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 4s
+      retries: 10
+    restart: always
+    networks:
+      # - inception
+      static-network:
+        ipv4_address: ${MARIADB_IP}
+
+  wordpress:
+    container_name: wordpress
+    depends_on: 
+      mariadb:
+        condition: service_healthy
+    build: "requirements/wordpress"
+    expose:
+      - "9000"
+    restart: always
+    volumes:
+      - wordpress_data:/var/www/html
+    environment:
+      - WP_DATABASE=${WP_DATABASE}
+      - WP_USER=${WP_USER}
+      - WP_ADMIN=${WP_ADMIN}
+      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+      - WP_USER_EMAIL=${WP_USER_EMAIL}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    networks:
+      # - inception
+      static-network:
+        ipv4_address: ${WP_IP}
+
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
+# networks:
+#   inception:
+#     name: inception
+#     driver:
+#       bridge
